@@ -4,7 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\User\UserController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -26,13 +27,29 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    if (auth()->user()->hasRole('admin')){
+        return to_route('admin.index');
+    }else{
+        return to_route('user.index');
+//        return Inertia::render('Dashboard');
+    }
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::group(['name' => 'user'], function () {
+    Route::get('user', [UserController::class,'index'])->name('user.index');
+//    return Inertia::render('Dashboard');
+})->middleware(['auth'])->name('user.index');
+
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('admin', [AdminController::class,'index'])->name('admin.index');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+
 
 require __DIR__.'/auth.php';
